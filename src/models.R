@@ -68,7 +68,7 @@ SEIR_3 <- function(t, x, parms) {
     N2 <- 0.266 * N
     ##### grupo [0-19], contagia igual que el resto, se reupera más rápido y no muere
     bet0 <- bet
-    gam0 <- gam
+    gam0 <- gam * 2
     mu0 <- 0.0
     a0 <- a * 2
     ##### grupo [20-49], contagia el doble (actividades todo el dia), se reupera la mitad de lo standard y muere como todos
@@ -83,20 +83,24 @@ SEIR_3 <- function(t, x, parms) {
     a2 <- a / 2
     #################################################
 
-    S0dot <- -(bet0 * I0 / N0 + bet1 * I1 / N1) / 2 * S0
-    E0dot <- (bet0 * I0 / N0 + bet1 * I1 / N1) / 2 * S0 - (a0 + gam0 * 0.0) * E0
+    #S0dot <- -(bet0 * I0 / N0 + bet1 * I1 / N1) / 2 * S0
+    #E0dot <- (bet0 * I0 / N0 + bet1 * I1 / N1) / 2 * S0 - (a0 + gam0 * 0.0) * E0
+    S0dot <- -(bet0 * I0 / N0)  * S0
+    E0dot <- (bet0 * I0 / N0) * S0 - a0 * E0
     I0dot <- a0 * E0 - (gam0 + mu0) * I0
     R0dot <- gam0 * I0 + gam0 * E0
     M0dot <- mu0 * I0
 
-    S1dot <- -(bet0 * I0 / N0 + bet1 * I1 / N1 + bet2 * I2 / N2) / 3 * S1
-    E1dot <- (bet0 * I0 / N0 + bet1 * I1 / N1 + bet2 * I2 / N2) / 3 * S1 - (a1 + gam1 * 0.0) * E1
+    #S1dot <- -(bet0 * I0 / N0 + bet1 * I1 / N1 + bet2 * I2 / N2) / 3 * S1
+    #E1dot <- (bet0 * I0 / N0 + bet1 * I1 / N1 + bet2 * I2 / N2) / 3 * S1 - (a1 + gam1 * 0.0) * E1
+    S1dot <- -(bet1 * I1 / N1) * S1
+    E1dot <- (bet1 * I1 / N1) * S1 - a1 * E1
     I1dot <- a1 * E1 - (gam1 + mu1) * I1
     R1dot <- gam1 * I1 + gam1 * 0.0 * E1
     M1dot <- mu1 * I1
 
-    S2dot <- -(bet1 * I1 / N1 + bet2 * I2 / N2) / 2 * S2
-    E2dot <- (bet1 * I1 / N1 + bet2 * I2 / N2) / 2 * S2 - a1 * E2
+    S2dot <- -(bet2 * I2 / N2) * S2
+    E2dot <- (bet2 * I2 / N2) * S2 - a1 * E2
     I2dot <- a1 * E2 - (gam2 + mu2) * I2
     R2dot <- gam2 * I2
     M2dot <- mu2 * I2
@@ -163,7 +167,7 @@ SEIR_3mod <- function(t, x, parms) {
 
 ##### Integrador de modelos
 tryRK <-
-  function(parms, xstart, times, model) {
+  function(model,parms, xstart, times) {
     ## The parameters
     library("deSolve")
     ####################### DO IT
@@ -185,10 +189,9 @@ tryRK <-
       print(c("Model ", model, " not implemented"))
       return(0)
     }
-    # print(xstart)
     # secuencia del tiempo de integracion
     if (missing(times)) times <- seq(0, 90, length = 91)
-    model_in <- switch(model, "SEIRmod" = SEIRmod, "SEIR" = SEIR, "SEIR_3mod" = SEIRmod, "SEIR_3" = SEIR)
+    model_in <- switch(model, "SEIRmod" = SEIRmod, "SEIR" = SEIR, "SEIR_3mod" = SEIR_3mod, "SEIR_3" = SEIR_3)
 
     out <- rk(xstart, times, model_in, parms, hini = 1, method = "rk4")
     # out es un tipo deSolve

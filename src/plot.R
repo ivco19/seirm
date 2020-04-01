@@ -3,13 +3,13 @@
 ## luego plotea todas las poblaciones evolucionadas y las reales
 ##
 ddo <-
-  function(par, xstart, model) {
+  function(model, par, xstart) {
     source("src/models.R")
     source("src/load_data.R")
     if (missing(par)) {
       simu <- tryRK() # <- integro
     } else {
-      simu <- tryRK(parms = par, xstart = xstart, model)
+      simu <- tryRK(model=model, parms = par, xstart = xstart)
     } # <- integro
     # cargamos los datos reales
     Real <- load_data(download = FALSE)

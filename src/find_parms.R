@@ -1,6 +1,15 @@
+doall <-
+   function() {
+      s1=find_parms('SEIR',Nbet=14)
+      s2=find_parms('SEIRmod',Nbet=14)
+      s3=find_parms('SEIR_3',Nbet=14)
+      s4=find_parms('SEIR_3mod',Nbet=14)
+      return(list(seir=s1,seirm=s2,seir3=s3,seir3m=s4))
+   }
+
 
 find_parms <-
-  function(model) {
+  function(model,Nbet) {
     library("deSolve")
     # source('getPar.R')
     source("src/models.R")
@@ -8,7 +17,8 @@ find_parms <-
     source("src/load_data.R")
 
     if (missing(model)) model <- "SEIR"
-    model_in <- switch(model, "SEIRmod" = SEIRmod, "SEIR" = SEIR, "SEIR_3mod" = SEIRmod, "SEIR_3" = SEIR)
+    if (missing(Nbet)) Nbet <- 10
+    model_in <- switch(model, "SEIRmod" = SEIRmod, "SEIR" = SEIR, "SEIR_3mod" = SEIR_3mod, "SEIR_3" = SEIR_3)
 
     Real <- load_data(download = FALSE)
     iday <- 24
@@ -23,14 +33,13 @@ find_parms <-
     times <- seq(0, 60, length = 61)
 
     XXsig <- 1E9
-    Nbet <- 6
     count <- 1
     for (BET in lseq(0.001, 2.5, Nbet)) {
-      for (AAA in seq(1.0, 50, len = Nbet)) {
-        for (GAM in seq(3.0, 50, len = Nbet)) {
-          for (MUU in lseq(0.001, 1., Nbet / 2)) {
-            for (Eini in lseq(1, 1000, Nbet / 2)) {
-              for (Iini in lseq(1, 1000, Nbet / 2))
+      for (AAA in seq(1.0, 30, len = Nbet)) {
+        for (GAM in seq(3.0, 30, len = Nbet)) {
+          for (MUU in lseq(0.001, 1., Nbet)) {
+            for (Eini in lseq(1, 1000, Nbet-1)) {
+              for (Iini in lseq(1, 100, Nbet-1))
               {
                 Eini <- as.integer(Eini)
                 Iini <- as.integer(Iini)
@@ -91,7 +100,7 @@ find_parms <-
         }
       }
       print("///////////////////////////")
-      sprintf("Sigma: %8.4f / Porcent: %8.4f", XXsig, count / Nbet * 100)
+      print(sprintf("Sigma: %8.4f / Porcent: %8.4f", XXsig, count / Nbet * 100))
       count <- count + 1
       if (!missing(Par_pref)) {
         print(c(Par_pref))
@@ -105,8 +114,8 @@ find_parms <-
     } else {
       print(c(XXsig, Par_pref, Ini_pref))
 
-      ddo(par = Par_pref, xstart = Ini_pref)
+      ddo(model=model, par = Par_pref, xstart = Ini_pref)
 
-      return(list(par = Par_pref, xstart = Ini_pref))
+      return(list(par = Par_pref, xstart = Ini_pref,Sigma=XXsig))
     }
   }
