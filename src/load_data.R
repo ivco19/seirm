@@ -60,7 +60,7 @@ load_data <- function(download) {
 
   # parsea Recuperados
   tr <- 0.0 * (2:Nd)
-  for (i in 1:Nf)
+  for (i in 1:Nf+1)
   {
     line <- unlist(strsplit(dm[[1]][i], ","))
     flag <- sum(unlist(strsplit(line[[1]], " ")) == "Recuperados")

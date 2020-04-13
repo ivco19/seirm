@@ -13,7 +13,7 @@ ddo <-
     } # <- integro
     # cargamos los datos reales
     Real <- load_data(download = FALSE)
-    iday <- 20 # elijo dia 20 porque ya hay un buen nuemero de casos
+    iday <- 11 # elijo dia 20 porque ya hay un buen nuemero de casos
     fday <- end(Real[, 1])[1]
     RInf <- Real[, 4][iday:fday]
     RMue <- Real[, 1][iday:fday]

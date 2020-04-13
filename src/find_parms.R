@@ -1,9 +1,9 @@
 doall <-
    function() {
-      s1=find_parms('SEIR',Nbet=14)
-      s2=find_parms('SEIRmod',Nbet=14)
-      s3=find_parms('SEIR_3',Nbet=14)
-      s4=find_parms('SEIR_3mod',Nbet=14)
+      s1=find_parms('SEIR',Nbet=7)
+      s2=find_parms('SEIRmod',Nbet=7)
+      s3=find_parms('SEIR_3',Nbet=7)
+      s4=find_parms('SEIR_3mod',Nbet=7)
       return(list(seir=s1,seirm=s2,seir3=s3,seir3m=s4))
    }
 
@@ -21,7 +21,8 @@ find_parms <-
     model_in <- switch(model, "SEIRmod" = SEIRmod, "SEIR" = SEIR, "SEIR_3mod" = SEIR_3mod, "SEIR_3" = SEIR_3)
 
     Real <- load_data(download = FALSE)
-    iday <- 24
+    iday <- 23
+#:    iday <- 20
     fday <- end(Real[, 1])[1]
     RInf <- Real[, 4][iday:fday]
     RMue <- Real[, 1][iday:fday]
@@ -34,12 +35,12 @@ find_parms <-
 
     XXsig <- 1E9
     count <- 1
-    for (BET in lseq(0.001, 2.5, Nbet)) {
-      for (AAA in seq(1.0, 30, len = Nbet)) {
-        for (GAM in seq(3.0, 30, len = Nbet)) {
-          for (MUU in lseq(0.001, 1., Nbet)) {
-            for (Eini in lseq(1, 1000, Nbet-1)) {
-              for (Iini in lseq(1, 100, Nbet-1))
+    for (BET in lseq(0.01, 1.5, Nbet)) {
+      for (AAA in seq(1.0, 20, len = Nbet)) {
+        for (GAM in seq(2.0, 30, len = Nbet)) {
+          for (MUU in c(0.005,0.01,0.05,0.1,0.2)){ #lseq(0.001, 1., )) {
+            for (Eini in lseq(1, 1000, Nbet-2)) {
+              for (Iini in c(1, 5, 10))  # No encontre mucha dependencia con esto
               {
                 Eini <- as.integer(Eini)
                 Iini <- as.integer(Iini)
@@ -53,9 +54,9 @@ find_parms <-
     		} else if (model == "SEIR_3" || model == "SEIR_3mod") {
                   # porcent=c(0.304,0.430,0.266)
                   xstart <- c(
-                    S0 = 0.304 * (N - Eini - Iini - 2), E0 = 0.304 * Eini, I0 = 0.304 * Iini, R0 = 1, M0 = 1,
-                    S1 = 0.430 * (N - Eini - Iini - 2), E1 = 0.430 * Eini, I1 = 0.430 * Iini, R1 = 1, M1 = 1,
-                    S2 = 0.266 * (N - Eini - Iini - 2), E2 = 0.266 * Eini, I2 = 0.266 * Iini, R2 = 1, M2 = 1
+                    S0 = 0.304 * (N - Eini - Iini - 1), E0 = 0.304 * Eini, I0 = 0.304 * Iini, R0 = 0, M0 = 1,
+                    S1 = 0.430 * (N - Eini - Iini - 1), E1 = 0.430 * Eini, I1 = 0.430 * Iini, R1 = 0, M1 = 1,
+                    S2 = 0.266 * (N - Eini - Iini - 1), E2 = 0.266 * Eini, I2 = 0.266 * Iini, R2 = 0, M2 = 1
                   )
                   out <- rk(xstart, times, model_in, parms, hini = 1, method = "rk4")
                   IT <- out[, "I0"] + out[, "I1"] + out[, "I2"]
@@ -74,7 +75,7 @@ find_parms <-
                   sig_inf <- sig_inf + (IT[i] - RInf[i - iday + 1])^2
                   sig_rec <- sig_rec + (RT[i] - RRec[i - iday + 1])^2
                   sig_mue <- sig_mue + (MT[i] - RMue[i - iday + 1])^2
-                  mminf <- mminf + RInf[i - iday + 1]^2
+                  mminf <- 2*mminf + RInf[i - iday + 1]^2
                   mmrec <- mminf + RRec[i - iday + 1]^2
                   mmmue <- mminf + RMue[i - iday + 1]^2
                 }
@@ -85,7 +86,8 @@ find_parms <-
                 sig_rec <- sqrt(sig_rec / mmrec)
                 sig_mue <- sqrt(sig_mue / mmmue)
 
-                XsigT <- sig_mue + sig_rec + sig_inf
+                #XsigT <- sig_mue + sig_rec + sig_inf
+                XsigT <- sig_inf
                 # print(c(XsigT,XXsig))
                 if (!is.na(XsigT)) {
                   if (XXsig > XsigT) {
@@ -107,7 +109,7 @@ find_parms <-
         print(c(Ini_pref))
       }
     }
-    print("@@@@@@@@@@@@@@@@@@@@@@@@@@@")
+    print(c("@@@@@",model,"@@@@@@@@@@@@@@@@@@@@@@"))
     if (missing(Par_pref)) {
       print("No se pudieron ajustar parametros")
       return(0)
@@ -116,6 +118,6 @@ find_parms <-
 
       ddo(model=model, par = Par_pref, xstart = Ini_pref)
 
-      return(list(par = Par_pref, xstart = Ini_pref,Sigma=XXsig))
+      return(list(model = model, par = Par_pref, xstart = Ini_pref,Sigma=XXsig))
     }
   }
