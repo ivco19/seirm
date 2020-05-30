@@ -12,6 +12,7 @@ res <- run(model = model)
 plot(res)
 return(res)
 }
+
 trySEIRM <-
 function()
 {
