@@ -14,13 +14,17 @@ SEIR_2 <- function(t, x, parms) {
     ### Nro de indiviuos por rangos etarios, mail dante de E Bologna
     N0 <- 0.82 * N
     N1 <- 0.18 * N
-    tt = c(19,30,65)
+    tt = c(20,38,45,55)
     #bett = c(0.9  , 0.3 , 0.35 , 0.65  , 0.001 , 0.17)
     #gamm = c(0.0  , 0.04 , 0.06  , 0.    , 0.003  , 0.45)
     #muuu = c(0.0  , 0.0   , 0.0  , 0.0   , 0.05  , 0.19)
-    bett = matrix(c(0.24   , 0.05  , 0.04  , 0.018  , 0.12  , 0.04   , 0.055 , 0.02 ),ncol=2)
-    gamm = matrix(c(0.0    , 0.001 , 0.018 , 0.008 , 0.00  , 0.001  , 0.01  , 0.005),ncol=2)
-    muuu = matrix(c(0.0    , 0.0   , 0.0   , 0.0   , 0.00  , 0.01   , 0.03  , 0.05 ),ncol=2)
+    #                t0    t1       t2      t3      t4 
+    bett = matrix(c(0.3 , 0.045 , 0.045 , 0.035 , 0.04 ,
+                    0.38, 0.045 , 0.11  , 0.035 , 0.03 ),ncol=2)
+    gamm = matrix(c(0.0 , 0.007 , 0.026 , 0.03  , 0.015, 
+                    0.0 , 0.005 , 0.015 , 0.025 , 0.01 ),ncol=2)
+    muuu = matrix(c(0.0 , 0.0   , 0.0   , 0.0   , 0.00 , 
+                    0.0 , 0.005 , 0.006 , 0.008 , 0.005),ncol=2)
 
     if(t <= tt[1]){
     ##### grupo [0-60], contagia igual que el resto, se reupera más rápido y no muere
@@ -36,10 +40,14 @@ SEIR_2 <- function(t, x, parms) {
        bet <- bett[3,]
        gam <- gamm[3,]
        mu  <- muuu[3,]
-    } else {
+    } else if( t > tt[3] && t <= tt[4]){
        bet <- bett[4,]
        gam <- gamm[4,]
        mu  <- muuu[4,]
+    } else {
+       bet <- bett[5,]
+       gam <- gamm[5,]
+       mu  <- muuu[5,]
     }
     #################################################
 
@@ -72,12 +80,13 @@ tryRK <-
     if (missing(parms)) parms <- c(bet = 0.55, a = 0.5 / 14.2, gam = 0.0255, mu = 0.02, N = N)
     if (missing(xstart)) {
         xstart <- c(
-          S0 = 0.82 * N, I0 = 1, R0 = 0, M0 = 0,
-          S1 = 0.18 * N, I1 = 1, R1 = 0, M1 = 0
+          S0 = 0.82 * N, I0 = 13, R0 = 0, M0 = 0,
+          S1 = 0.18 * N, I1 = 4, R1 = 0, M1 = 0
         )
       }
     # secuencia del tiempo de integracion
-    if (missing(times)) times <- seq(0, 100, length = 101)
+    bday=15
+    if (missing(times)) times <- seq(bday, 100, length = 101-bday)
 
     out <- rk(xstart, times, SEIR_2, parms, hini = 1, method = "rk4")
     # out es un tipo deSolve
@@ -89,39 +98,55 @@ ddo <-
     source('src/funciones_NG.R')
     simu <- tryRK() # <- integro
     # cargamos los datos reales
-    dat <- prepara_datos('src/BM.csv','BM')
+    dat  <- prepara_datos('src/BM.csv','BM')
     Real <- todos(dat)
+    
+    bday=15
 
-     iday <- 1 # elijo dia 20 porque ya hay un buen nuemero de casos
+     iday <- bday # elijo dia 20 porque ya hay un buen nuemero de casos
      fday <- length(Real$dates)
-     RInf <- cumsum(Real$Sinf)
-     RRec <- cumsum(Real$Srec)
-     RMue <- cumsum(Real$Sfal)
-     Rtime <- seq(iday, fday) #-8#+8
 
-    # sumo los resultados para los 3 subgrupos
-    # copio los datos homogeneos
-      ST <- simu[, "S0"] + simu[, "S1"] 
-   #   ET <- simu[, "E0"] + simu[, "E1"] 
-      IT <- simu[, "I0"] + simu[, "I1"] 
-      RT <- simu[, "R0"] + simu[, "R1"] 
-      MT <- simu[, "M0"] + simu[, "M1"] 
+     Rtime <- seq(iday, fday) - bday
+    
+     RInf0 <- cumsum(Real$Sinf0[iday:fday])
+     RInf1 <- cumsum(Real$Sinf1[iday:fday])
+    
+     RRec0 <- cumsum(Real$Srec0[iday:fday])
+     RRec1 <- cumsum(Real$Srec1[iday:fday])
+     
+     RMue <- cumsum(Real$Sfal1[iday:fday])
+
+      ST0 <- simu[, "S0"] 
+      ST1 <- simu[, "S1"]
+      IT0 <- simu[, "I0"]
+      IT1 <- simu[, "I1"]
+      RT0 <- simu[, "R0"] 
+      RT1 <- simu[, "R1"] 
+      MT0 <- simu[, "M0"] 
+      MT1 <- simu[, "M1"] 
 
     # ploteo los totales
     # plot (ST, type = "l", col='blue', xlab = "Dias", ylab = "Poblacion",ylim=c(0,3.5E6))
-    plot(ST, type = "l", col = "blue", xlab = "Dias", ylab = "Poblacion", ylim = c(1, 3E7), log = "y")
+    plot(ST0, type = "l", lty="dotted", lwd = 2, col = "blue", xlab = "Dias - 15 de FIS_0", ylab = "Poblacion", ylim = c(1,2E3), log = "y")
   #  lines(ET, col = "magenta", lty = "dotted", lwd = 2)
-    lines(IT, col = "red", lty = "dotted", lwd = 2)
-    lines(RT, col = "green", lty = "dotted", lwd = 2)
-    lines(MT, col = "black", lty = "dotted", lwd = 2)
+    lines(IT0, col = "red", lty = "dotted", lwd = 2)
+    lines(RT0, col = "green", lty = "dotted", lwd = 2)
+#    lines(MT0, col = "black", lty = "dotted", lwd = 2)
+    lines(ST1, col = "blue" , lty = "dashed", lwd = 2)
+    lines(IT1, col = "red"  , lty = "dashed", lwd = 2)
+    lines(RT1, col = "green", lty = "dashed", lwd = 2)
+    lines(MT1, col = "black", lty = "dashed", lwd = 2)
     # overplot los reales
-    points(Rtime, RInf, col = "red")
-    points(Rtime, RMue, col = "black")
-    points(Rtime, RRec, col = "green")
-    legend("right", c("Sanos", "Contagiados", "Infectados", "Recuperados", "Muertos"),
+    points(Rtime, RInf0, col = "red")
+    points(Rtime, RInf1, col = "red",pch=5)
+    points(Rtime, RMue,  col = "black",pch=5)
+    points(Rtime, RRec0, col = "green")
+    points(Rtime, RRec1, col = "green",pch=5)
+    legend("topleft", c("Sanos", "Contagiados", "Infectados", "Recuperados", "Muertos"),
       col = c("blue", "magenta", "red", "green", "black"),
       pch = c(21, 21, 21, 21, 21)
     )
+    legend("bottomright",c("Menores a 60","Mayores a 60"),pch=c(21,5))
    # if (!missing(par)) {
    #   tlab01 <- sprintf("I0 %4.2f / E0 %4.2f", xstart[3], xstart[2])
    #   tlab02 <- sprintf("Beta:%2.4f / a:%2.4f / gamma:%2.4f / mu:%2.4f", par[1], par[2], par[3], par[4])

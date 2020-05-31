@@ -12,7 +12,11 @@
 *-Ex.R
 
 # Output files from R CMD build
-/*.tar.gz
+*.tar.gz
+*.pdf
+src/*.csv
+src/funciones_NG.R
+
 
 # Output files from R CMD check
 /*.Rcheck/
