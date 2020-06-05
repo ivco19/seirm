@@ -24,12 +24,18 @@ SEIR_2 <- function(t, x, parms) {
     #muuu = matrix(c(0.0 , 0.0   , 0.0   , 0.0   , 0.00 , 
     #                0.0 , 0.005 , 0.006 , 0.008 , 0.005),ncol=2)
     #tt = c(0,20,30,55)
-    bett = matrix(c(0.4   , 0.04, 0.045 ,
-                    0.25  , 0.05  , 0.02  ),ncol=2)
-    gamm = matrix(c(0.0 , 0.01 , 0.025, 
-                    0.0 , 0.005 , 0.018),ncol=2)
+    ##bett = matrix(c(0.002, 0.0001, 0.03 ,
+    ##                0.3  , 0.06  , 0.05  ),ncol=2)
+    ##gamm = matrix(c(0.0 , 0.008 , 0.015, 
+    ##                0.0 , 0.009 , 0.03),ncol=2)
+    ##muuu = matrix(c(0.0 , 0.0    , 0.0    , 
+    ##                0.0 , 0.005 , 0.01),ncol=2)
+    bett = matrix(c(0.33, 0.04  , 0.03 ,
+                    0.38, 0.06  , 0.04  ),ncol=2)
+    gamm = matrix(c(0.0 , 0.008 , 0.02, 
+                    0.0 , 0.008 , 0.018),ncol=2)
     muuu = matrix(c(0.0 , 0.0    , 0.0    , 
-                    0.0 , 0.004 , 0.006),ncol=2)
+                    0.0 , 0.004 , 0.01),ncol=2)
     bet <- bett[length(tt),]
     gam <- gamm[length(tt),]
     mu  <- muuu[length(tt),]
@@ -42,12 +48,21 @@ SEIR_2 <- function(t, x, parms) {
     }
     #################################################
 
-    S0dot <- -(bet[1] * I0 / N0)  * S0
-    S1dot <- -(bet[2] * I1 / N1) * S1 - bet[1] *I0 /N0 * S1
+   # if(t < 40){
+   # S0dot <- -(bet[1] * I0 / N0)  * S0 - (bet[2] *I1 /N1) * S0
+   # S1dot <- -(bet[2] * I1 / N1) * S1 - bet[1] *I0 /N0 * S1
+   # }else{
+    S0dot <- -(bet[1] * I0 / N0) * S0
+    S1dot <- -(bet[2] * I1 / N1) * S1 
+   # }
 
-    I0dot <- (bet[1] * I0 / N0) * S0 - (gam[1] + mu[1]) * I0
-    I1dot <- (bet[2] * I1 / N1) * S1 - (gam[2] + mu[2]) * I1 + bet[1] *I0 /N0 * S1
-    
+  #  if(t < 40){
+  #  I0dot <- (bet[1] * I0 / N0) * S0 - (gam[1] + mu[1]) * I0 + bet[2] *I1 /N1 * S0
+  #  I1dot <- (bet[2] * I1 / N1) * S1 - (gam[2] + mu[2]) * I1 + bet[1] *I0 /N0 * S1
+  #  }else{
+    I0dot <- (bet[1] * I0 / N0) * S0 - (gam[1] + mu[1]) * I0 
+    I1dot <- (bet[2] * I1 / N1) * S1 - (gam[2] + mu[2]) * I1
+  #  }
     R0dot <- gam[1] * I0 
     M0dot <- mu[1] * I0
 
@@ -73,8 +88,9 @@ tryRK <-
     if (missing(parms)) parms <- c(bet = 0.55, a = 0.5 / 14.2, gam = 0.0255, mu = 0.02, N = N)
     if (missing(xstart)) {
         xstart <- c(
-          S0 = 0.82 * N, I0 = 8, R0 = 0, M0 = 0,
-          S1 = 0.18 * N, I1 = 3, R1 = 0, M1 = 0
+          S0 = 0.82 * N, I0 = 13, R0 = 0, M0 = 0,
+          S1 = 0.18 * N, I1 = 4, R1 = 0, M1 = 0
+	  #4,4
         )
       }
     # secuencia del tiempo de integracion
@@ -120,7 +136,7 @@ ddo <-
 
     # ploteo los totales
     # plot (ST, type = "l", col='blue', xlab = "Dias", ylab = "Poblacion",ylim=c(0,3.5E6))
-    plot(ST0, type = "l", lty="dotted", lwd = 2, col = "blue", xlab = "(Dias - 15) desde primero caso", ylab = "Poblacion", ylim = c(1,3E6), log = "y")
+    plot(ST0, type = "l", lty="dotted", lwd = 2, col = "blue", xlab = "(Dias - 15) desde primer caso", ylab = "Poblacion", ylim = c(1,3E6), log = "y")
   #  lines(ET, col = "magenta", lty = "dotted", lwd = 2)
     lines(IT0, col = "red", lty = "dotted", lwd = 2)
     lines(RT0, col = "green", lty = "dotted", lwd = 2)
@@ -135,10 +151,10 @@ ddo <-
     points(Rtime, RMue,  col = "black",pch=5)
     points(Rtime, RRec0, col = "green")
     points(Rtime, RRec1, col = "green",pch=5)
-    #legend("topleft", c("Sanos", "Infectados", "Recuperados", "Muertos"),
+    #legend("topleft", c("Sanos", "Contagiados", "Infectados", "Recuperados", "Muertos"),
     legend("left", c("Sanos", "Infectados", "Recuperados", "Muertos"),
       col = c("blue", "red", "green", "black"),
-      pch = c( 21, 21, 21, 21)
+      pch = c(21, 21, 21, 21)
     )
     legend("bottomright",c("Menores a 60","Mayores a 60"),pch=c(21,5))
    # if (!missing(par)) {
